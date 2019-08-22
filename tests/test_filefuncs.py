@@ -4,12 +4,13 @@ import os
 import pytest
 import zipfile
 from utilfuncs import filefuncs
+
 from utilfuncs.filefuncs import (
     move_file,
     move_files,
     move_dir,
     move_files_based_on_text,
-    get_file_paths_by_substr,
+    # get_file_paths_by_substr,
     filter_by_glob,
 )
 
@@ -139,7 +140,7 @@ def test_filter_by_glob_works_v1():
     print(result)
 
     assert expected == result
-    
+
 
 def test_zipdir_works(tmp_path):
     # Arrange - create a directory with a file in tmp_path
@@ -169,9 +170,9 @@ def test_zipfiles_works(tmp_path):
     # Arrange  - create 3 files with one file in a separate directory
     os.mkdir(tmp_path / "somedir")
     files = [
-            tmp_path / "a.txt",
-            tmp_path / "somedir" / "b.txt",
-            tmp_path / "c.txt"
+        tmp_path / "a.txt",
+        tmp_path / "somedir" / "b.txt",
+        tmp_path / "c.txt"
     ]
     for f in files:
         with open(f, "wt") as file:
