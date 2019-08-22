@@ -1,6 +1,5 @@
 import csv
-import os
-from pathlib import Path
+
 
 def get_rows(csvpath):
     """
@@ -12,7 +11,7 @@ def get_rows(csvpath):
 
     Args:
         csvpath: Path to csv file
-    
+
     Returns:
         Generator that can be iterated on to
         receive rows.
