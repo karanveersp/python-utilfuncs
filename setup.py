@@ -9,5 +9,6 @@ setup(
         'pdoc3',
         'pipreqs',
         'pytest',
+        'pytest-mock',
     ]
 )
