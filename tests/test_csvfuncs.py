@@ -42,8 +42,8 @@ def test_csv_file_can_be_written(tmp_path):
 
     # Assert
     assert (
-        Path.is_file(csvpath)  # file exists
-        and next(csvfuncs.get_rows(csvpath)) == list_of_rows[0]  # first row matches
+        Path.is_file(csvpath)
+        and next(csvfuncs.get_rows(csvpath)) == list_of_rows[0]
     )
 
 
