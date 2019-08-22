@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from pathlib import Path
 import shutil
 import os
@@ -13,7 +12,6 @@ from utilfuncs.filefuncs import (
     get_file_paths_by_substr,
     filter_by_glob,
 )
-
 
 
 def getSrc():
@@ -143,14 +141,6 @@ def test_filter_by_glob_works_v1():
     assert expected == result
     
 
-
-
-
-=======
-
-
-
-
 def test_zipdir_works(tmp_path):
     # Arrange - create a directory with a file in tmp_path
     source_dir = tmp_path / "mydir"
@@ -198,4 +188,3 @@ def test_zipfiles_works(tmp_path):
     with zipfile.ZipFile(zip_path, "r") as z:
         # all files are at the top level in the zip - no dirs
         assert z.namelist() == ["a.txt", "b.txt", "c.txt"]
->>>>>>> bb44376f222b6f533e533806e60fbb11c2e7754a

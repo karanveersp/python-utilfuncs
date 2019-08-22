@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import os
 from pathlib import Path
 import shutil
@@ -78,7 +77,6 @@ def filter_by_glob(collection, pattern):
                 if strItem.startswith(begining) and strItem.endswith(ending):
                         newList.append(strItem)
         return newList
-=======
 
 def zipdir(source_dir, zipname=None):
     """
@@ -146,4 +144,3 @@ def zipfiles(file_paths, dest_dir, zipname):
     shutil.rmtree(temp_dir)
 
     return dest.joinpath(zipname + ".zip")
->>>>>>> bb44376f222b6f533e533806e60fbb11c2e7754a
