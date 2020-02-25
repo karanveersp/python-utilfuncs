@@ -5,3 +5,5 @@ venv/
 tests/files/*
 !tests/files/Employee.csv
 /utilfuncs.egg-info/
+dist/
+build/
