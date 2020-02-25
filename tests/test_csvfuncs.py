@@ -41,7 +41,7 @@ def test_csv_file_can_be_written(tmp_path):
     util.write_rows(csvpath, list_of_rows)
 
     # Assert
-    assert Path.is_file(csvpath) and next(csvfuncs.get_rows(csvpath)) == list_of_rows[0]
+    assert Path.is_file(csvpath) and next(util.get_rows(csvpath)) == list_of_rows[0]
 
 
 def test_row_is_appended_to_existing_csv(tmp_path):
