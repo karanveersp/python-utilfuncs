@@ -7,3 +7,4 @@ tests/files/*
 /utilfuncs.egg-info/
 dist/
 build/
+.idea/

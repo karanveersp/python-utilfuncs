@@ -1,5 +1,4 @@
 import os
-import shutil
 import pytest
 import zipfile
 from pathlib import Path
