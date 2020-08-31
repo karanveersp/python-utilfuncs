@@ -1,0 +1,18 @@
+site_name: utilfuncs
+nav:
+  - Home: index.md
+  - About: about.md
+  - CSV Funcs: csv_funcs.md
+  - File Funcs: file_funcs.md
+  - Misc Funcs: misc_funcs.md
+theme: material
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_source: true
+      watch:
+        - src/utilfuncs

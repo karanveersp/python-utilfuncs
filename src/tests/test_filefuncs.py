@@ -18,13 +18,13 @@ def build_dummy_files(tmpdir, file_names):
     [f.write_text("_") for f in files]
     return files
 
-
+# TODO: Fix
 def test_get_file_with_string_in_name_works(tmpdir):
     dummies = build_dummy_files(tmpdir, ["file_a.txt", "file_b.txt", "file_aabb.txt"])
 
     files = util.get_files_where_string_in_name(tmpdir, "a", isSensitive=True)
 
-    assert files == [dummies[0], dummies[2]]
+    assert sorted(files) == [dummies[0], dummies[2]]
 
 
 @patch("shutil.move")
@@ -151,7 +151,7 @@ def test_zipfiles_works(tmp_path):
 
     with zipfile.ZipFile(zip_path, "r") as z:
         # all files are at the top level in the zip - no dirs
-        assert z.namelist() == ["a.txt", "b.txt", "c.txt"]
+        assert sorted(z.namelist()) == ["a.txt", "b.txt", "c.txt"]
 
 
 def test_file_conversion_to_utf8_works(tmpdir):

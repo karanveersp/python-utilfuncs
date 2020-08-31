@@ -1,3 +1,6 @@
+"""
+Utility csv functions for reading/writing/appending data.
+"""
 import csv
 
 
@@ -10,8 +13,8 @@ def get_rows(csvpath, skip_header=False, delimiter=",", encoding="utf-8"):
     Args:
         csvpath: Path to csv file
         skip_header (bool): Whether to skip header row
-        delimiter (str): Default ","
-        encoding (str): Default 'utf-8'
+        delimiter (str): Row delimiter character
+        encoding (str): File encoding
 
     Returns:
         Generator that can be iterated on to
