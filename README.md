@@ -27,6 +27,15 @@ Use the library:
 
 After importing the utilfuncs module as util, all the functions are directly accessible.
 
+## To build the documentation
+
+```
+pip install sphinx
+cd docs
+./make html
+```
+The HTML pages are in _build\html
+
 
 ## Contrubutors
 - Karanveer Plaha

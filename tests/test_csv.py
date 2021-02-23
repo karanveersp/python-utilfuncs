@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 
-import utilfuncs as util
+import utilfuncs.csv as util
 
 
 def test_csv_file_can_be_read(tmp_path):
