@@ -1,5 +1,8 @@
 # Python Utility Library
 
+[![Documentation Status](https://readthedocs.org/projects/python-utilfuncs/badge/?version=latest)](https://python-utilfuncs.readthedocs.io/en/latest/?badge=latest)
+
+
 ## Installation
 ```bash
 git clone https://github.com/karanveersp/python-utilfuncs
