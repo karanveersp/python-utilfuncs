@@ -1,3 +1,4 @@
 {
-  "python.pythonPath": "/home/karan/source/python/projects/python-utilfuncs/venv/bin/python3"
+  "python.pythonPath": "venv\\Scripts\\python.exe",
+  "restructuredtext.confPath": "${workspaceFolder}\\docs"
 }
