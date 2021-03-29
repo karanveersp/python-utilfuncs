@@ -23,3 +23,27 @@ def test_keep_trying_works_on_expected_error(mock_sleep):
 
     mock_sleep.assert_called_once()
     mock_sleep.assert_called_with(2)
+
+
+def test_filter_by_glob_works():
+    my_list = ["hulk_smash.txt", "hulk_smash.log", "hulk_sleep.txt"]
+
+    pattern = "hulk_*.txt"
+
+    expected = ["hulk_smash.txt", "hulk_sleep.txt"]
+
+    result = util.filter_by_glob(my_list, pattern)
+
+    assert expected == result
+
+
+def test_filter_by_glob_works_v1():
+    my_list = ["newyork_liberty", "newyork_empire", "newyork_liberty"]
+
+    pattern = "*_liberty"
+
+    expected = ["newyork_liberty", "newyork_liberty"]
+
+    result = util.filter_by_glob(my_list, pattern)
+
+    assert expected == result

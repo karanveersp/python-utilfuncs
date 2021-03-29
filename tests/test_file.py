@@ -18,32 +18,16 @@ def build_dummy_files(tmpdir, file_names):
     [f.write_text("_") for f in files]
     return files
 
-# TODO: Fix
-def test_get_file_with_string_in_name_works(tmpdir):
-    dummies = build_dummy_files(tmpdir, ["file_a.txt", "file_b.txt", "file_aabb.txt"])
 
-    files = util.get_files_where_string_in_name(tmpdir, "a", isSensitive=True)
-
-    assert sorted(files) == [dummies[0], dummies[2]]
-
-
-@patch("shutil.move")
-def test_move_file_doesnt_move_if_src_is_dir(mock_move, tmpdir):
-    dest = create_dest(tmpdir)
-
-    util.move_file(tmpdir, dest)
-
-    mock_move.assert_not_called()
-
-
-def test_move_file_works_if_src_is_file(tmpdir):
+def test_move_file_works(tmpdir):
     src = Path(tmpdir) / "a.txt"
     src.write_text("_")
     dest = create_dest(tmpdir)
 
     util.move_file(src, dest)
 
-    assert (dest / "a.txt").is_file()
+    content = (dest / "a.txt").read_text()
+    assert content == "_"
 
 
 def test_move_files_moves_all_files_without_ext(tmpdir):
@@ -55,7 +39,7 @@ def test_move_files_moves_all_files_without_ext(tmpdir):
     assert all([(dest / name).is_file() for name in os.listdir(dest)])
 
 
-def test_move_files_moves_all_files_with_ext(tmpdir):
+def test_move_files_works_on_specified_extensions(tmpdir):
     dest = create_dest(tmpdir)
     build_dummy_files(tmpdir, ["a.txt", "b.txt", "c.log"])
 
@@ -66,11 +50,11 @@ def test_move_files_moves_all_files_with_ext(tmpdir):
     assert (dest / "b.txt").is_file()
 
 
-def test_move_files_based_on_text_not_case_sensitive(tmpdir):
+def test_move_files_matching_regex_works(tmpdir):
     build_dummy_files(tmpdir, ["a.txt", "b_error_.txt", "c.txt"])
     dest = create_dest(tmpdir)
 
-    util.move_files_where_string_in_name(tmpdir, dest, "_erROR_", isSensitive=False)
+    util.move_files_matching_regex(tmpdir, dest, "*_error_*")
 
     assert (dest / "b_error_.txt").is_file()
     assert not (dest / "a.txt").is_file()
@@ -88,48 +72,22 @@ def test_move_dir(tmpdir):
     assert not src.is_dir()
 
 
-def test_filter_by_glob_works():
-    my_list = ["hulk_smash.txt", "hulk_smash.log", "hulk_sleep.txt"]
-
-    pattern = "hulk_*.txt"
-
-    expected = ["hulk_smash.txt", "hulk_sleep.txt"]
-
-    result = util.filter_by_glob(my_list, pattern)
-
-    assert expected == result
-
-
-def test_filter_by_glob_works_v1():
-    my_list = ["newyork_liberty", "newyork_empire", "newyork_liberty"]
-
-    pattern = "*_liberty"
-
-    expected = ["newyork_liberty", "newyork_liberty"]
-
-    result = util.filter_by_glob(my_list, pattern)
-
-    assert expected == result
-
-
 def test_zipdir_works(tmp_path):
     # Arrange - create a directory with a file in tmp_path
     source_dir = tmp_path / "mydir"
     somefile = source_dir / "myfile.txt"
     os.mkdir(source_dir)
-    with open(somefile, "w") as myfile:
-        myfile.write("Some content")
+    somefile.write_text("Some content")
 
     # Act
-    zip_path = util.zipdir(source_dir, "myarchive")
-    print(str(zip_path))
+    zip_path = util.zipdir(source_dir)
 
     # Assert
     assert zip_path.is_file()
 
 
-def test_value_error_if_source_dir_doesnt_exist(tmp_path):
-    with pytest.raises(ValueError):
+def test_invalid_dir_error_if_dir_doesnt_exist(tmp_path):
+    with pytest.raises(util.InvalidDirectoryPath):
         # Arrange
         source_dir = tmp_path / "mydir"
         # Act
@@ -137,14 +95,11 @@ def test_value_error_if_source_dir_doesnt_exist(tmp_path):
 
 
 def test_zipfiles_works(tmp_path):
-    # Arrange  - create 3 files with one file in a separate directory
-    os.mkdir(tmp_path / "somedir")
+    # Arrange  - create 3 files
     files = build_dummy_files(tmp_path, ["a.txt", "b.txt", "c.txt"])
-
-    dest_dir = tmp_path
-
+    zip_path = tmp_path / "files_archive.zip"
     # Act
-    zip_path = util.zipfiles(files, dest_dir, "files_archive")
+    util.zipfiles(zip_path, files)
 
     # Assert
     assert zip_path.is_file()
@@ -161,13 +116,10 @@ def test_file_conversion_to_utf8_works(tmpdir):
     filepath.write_bytes(windows_1252_text.encode("windows-1252"))
 
     # Act
-    converted_file = util.convert_to_utf8(filepath, Path(tmpdir))
+    contents = util.get_contents_as_utf8(filepath)
 
     # Assert
-    assert converted_file.is_file()
-    with open(converted_file, "rb") as f:
-        content_bytes = f.read()
-        assert windows_1252_text == content_bytes.decode("utf-8")
+    assert windows_1252_text == contents.decode("utf-8")
 
 
 def test_rename_file_works(tmpdir):

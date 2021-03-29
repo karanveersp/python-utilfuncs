@@ -1,180 +1,211 @@
 import os
 import shutil
 import datetime
+import base64
+import chardet
+import codecs
 from pathlib import Path
+from tempfile import TemporaryDirectory, tempdir
+from typing import List, Sequence, Union
+from zipfile import ZipFile, ZIP_DEFLATED
+
+from utilfuncs.common import *
 
 
-def create_dir_if_not_exists(dirpath):
-    """Creates a directory and all intermediate directories if they don't exist"""
-    if not Path(dirpath).is_dir() and "." not in str(dirpath):
+def create_dir_if_not_exists(dirpath: PathLike) -> None:
+    """
+    Creates a directory and all intermediate directories if they don't exist
+
+    Args:
+        dirpath: Path to dir
+    """
+    if not dirpath.is_dir():
         os.makedirs(dirpath, exist_ok=True)
 
 
-def rename_file(filepath, new_name):
+def get_base64_encoded_contents(filepath: PathLike) -> str:
     """
-    Rename the given file with new name.
-    Extension remains the same.
-    Returns path to renamed file.
+    Returns a b64 encoded string representing file contents
+
+    Args:
+        filepath: Path to file
+    
+    Returns:
+        B64 encoded string
     """
-    name, ext = Path(filepath).name.split(".")
-    name_with_ext = new_name + f".{ext}"
-    renamed_file_path = Path(filepath).parent / name_with_ext
+    with open(filepath, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+def get_ext(filepath: PathLike) -> str:
+    """
+    Returns the extension of the file with prepended period (.)
+    Example:
+        Fetching extension::
+        
+            >>> get_ext("file.txt")
+            ".txt"
+
+    Args:
+        filepath: Path of file
+    
+    Returns:
+        Period prefixed extension for the given file
+    """
+    return "." + filepath.name.split(".")[1]
+
+
+def rename_file(filepath: PathLike, new_name: str) -> PathLike:
+    """
+    Renames the given file with new name and returns path to renamed file.
+    
+
+    Args:
+        filepath: Path to existing file
+        new_name: New name to apply
+    
+    Returns:
+        Path to renamed file
+    """
+    new_name_with_ext = new_name + get_ext(filepath)
+    renamed_file_path = Path(filepath).parent / new_name_with_ext
     os.replace(filepath, renamed_file_path)
     return renamed_file_path
 
 
-def move_file(src_file, dest_dir):
-    """Moves src file to dest dir"""
-    if Path(src_file).is_file():
-        shutil.move(str(src_file), str(dest_dir))
+def move_file(src_file: PathLike, dest_dir: PathLike) -> PathLike:
+    """
+    Moves file to dest dir and returns file path in destination.
+
+    Args:
+        src_file: Path to src
+        dest_dir: Path to dir
+
+    Returns:
+        Path of file in destination
+    """
+
+    destpath = Path(dest_dir) / src_file.name
+    if destpath.is_file():
+        os.remove(destpath)
+    shutil.move(str(src_file), str(destpath))
+    return destpath
 
 
-def move_files(src, dest, ext=""):
-    """Moves all files of one extension from src to dest"""
-    filenames = os.listdir(src)
+def move_files(src_dir: PathLike, dest_dir: PathLike, ext="") -> None:
+    """
+    Moves all files of one extension from src to dest
+
+    Args:
+        src_dir: Source directory containing files to move
+        dest_dir: Destination directory
+        ext (str, optional): Target files to move by extension. Defaults to "".
+    """
+    filenames = os.listdir(src_dir)
     for name in filenames:
-        filepath = Path(src) / name
+        filepath = Path(src_dir) / name
         if name.endswith(ext) and filepath.is_file():
-            destpath = Path(dest) / filepath.name
-            shutil.move(str(filepath), str(destpath))
+            move_file(filepath, dest_dir)
 
 
-def move_dir(src, dest):
-    """Moves dir from source to destination"""
-    if Path(src).is_dir():
-        shutil.move(str(src), str(dest))
-
-
-def move_files_where_string_in_name(src, dest, string, isSensitive):
+def move_dir(src: PathLike, dest: PathLike) -> PathLike:
     """
-    Moves multiple files from one folder to the other based on text characters in file name
+    Moves dir from source to destination and returns new dir path.
+
+    Args:
+        src: Path to src
+        dest: Path to new parent dir
+
+    Returns:
+        Path to directory under dest
     """
-    filenames = os.listdir(str(src))
-    for name in filenames:
-        filepath = Path(src) / name
-        destpath = Path(dest) / filepath.name
-        if isSensitive:
-            if string in name:
-                shutil.move(str(filepath), str(destpath))
-        else:
-            if string.upper() in name.upper():
-                shutil.move(str(filepath), str(destpath))
+    shutil.move(str(src), str(dest))
+    return Path(dest) / src.name
 
 
-def get_files_where_string_in_name(dirpath, string, isSensitive):
+def move_files_matching_regex(src_dir: PathLike, dest_dir: PathLike, pattern: str) -> None:
     """
-    Gets list of file paths in a directory based on text characters in file name
+    Moves files matching regex to destination, non recursively.
+
+    Args:
+        src_dir: Path to src dir
+        dest_dir: Path to dest dir
+        pattern: Glob pattern
     """
-    fpaths = [str(x) for x in os.listdir(dirpath)]
-    retval = []
-    for name in fpaths:
-        if isSensitive:
-            if string in name:
-                retval.append(name)
-        else:
-            if string.upper() in name.upper():
-                retval.append(name)
-    return [dirpath / name for name in retval]
+    files = Path(src_dir).glob(pattern)
+    for path in files:
+        # skip dirs
+        if not path.is_file():
+            continue
+            
+        move_file(path, dest_dir)
 
 
-def filter_by_glob(collection, pattern):
-    """
-    Returns a filtered collection based on which
-    items match the provided string pattern.
-    """
-    parts = pattern.split("*")
-    beginning = parts[0]
-    ending = parts[1]
-
-    new_list = []
-
-    for item in collection:
-        item_as_str = str(item)
-        if item_as_str.startswith(beginning) and item_as_str.endswith(ending):
-            new_list.append(item)
-    return new_list
-
-
-def zipdir(source_dir, zipname=None):
+def zipdir(dirpath: PathLike, zip_path: PathLike = None, delete_dir_afterwards=False, top_level_dir=True) -> Path:
     """
     Creates a zip archive which contains the directory specified in dirPath.
 
     Args:
-        source_dir: Path or str representing absolute directory path
-        zipname (str, optional): Name of the generated archive. If not
-            provided, the name defaults to the directory's name.
+        dirpath: Path to directory
+        zip_path (PathLike, optional): Path to final zip file including name.
+            If not provided, the zip file is written in dirpath's parent with the
+            dirpath name and .zip extension.
+        delete_dir_afterwards (bool, optional): Whether to delete the orignal dir
+            after compression. Defaults to False.
+        top_level_dir (bool, optional): Whether to have dirpath folder
+            inside the zip or to have dirpath files directly inside the zip. Defaults to True.
 
     Returns:
-        Path for the zip archive created in the source_dir's parent dir
-
-    Raises:
-        ValueError if source is an invalid directory
+        Path of compressed zip file
     """
-    source = Path(source_dir)
+    
+    if not Path(dirpath).is_dir():
+        raise InvalidDirectoryPath(f"{dirpath} is not a valid directory")
 
-    if not source.is_dir():
-        raise ValueError(f"{source} is not a valid directory")
+    resolved_path = Path(dirpath).expanduser().resolve(strict=True)
 
-    dest = source.parent
+    final_zip_path = zip_path if zip_path is not None else (resolved_path.parent / (resolved_path.name + ".zip"))
+    with ZipFile(final_zip_path, "w", ZIP_DEFLATED) as zf:
+        for path in resolved_path.rglob("*"):
+            rel_to_top_level = path.relative_to(resolved_path.parent) if top_level_dir else path.relative_to(resolved_path)
+            zf.write(path, rel_to_top_level)
+    
+    if delete_dir_afterwards:
+        shutil.rmtree(str(dirpath))
 
-    # chdir to create the zip in the parent dir
-    os.chdir(dest)
-
-    if zipname is None:
-        zipname = source.name
-    print("zipname: " + zipname)
-
-    shutil.make_archive(zipname, format="zip", root_dir=source)
-
-    return dest.joinpath(zipname + ".zip")
+    return final_zip_path
 
 
-def zipfiles(file_paths, dest_dir, zipname):
+def zipfiles(zip_path: PathLike, files_or_directories: Sequence[PathLike]) -> None:
     """
-    Creates a zip archive from list of file paths in destination.
+    Creates a zip archive from list of file or directory paths in destination.
 
     Args:
-        file_paths: List of Path objects or strings
-        dest_dir: Path to directory where zip will be generated
-        zipname: Name of the zip archive
+        zip_path: Path of zip file with proper name and extension
+        file_paths: List of Paths
+    """
+    with TemporaryDirectory() as temp:
+
+        for f in files_or_directories:
+            if Path(f).is_dir():
+                shutil.copytree(f, Path(temp) / f.name)
+            else:
+                shutil.copyfile(f, Path(temp) / f.name)
+
+        zipdir(temp, zip_path, top_level_dir=False)
+
+
+def get_contents_as_utf8(filepath: PathLike) -> str:
+    """
+    Returns a string representing contents of the file converted to
+    utf-8.
+
+    Args:
+        filepath: Path to file
 
     Returns:
-        Path for the zip archive created
-
-    Raises:
-        ValueError if dest dir is invalid
+        File content as utf-8 string
     """
-    # convert to Path objects
-    dest = Path(dest_dir)
-    files = [Path(f) for f in file_paths]
-
-    if not dest.is_dir():
-        raise ValueError(f"{dest} is not a valid directory")
-
-    os.chdir(dest)
-
-    # copy all files in the list to a temp dir in dest
-    temp_dir = dest / "temp"
-    if temp_dir.is_dir():
-        shutil.rmtree(temp_dir)
-    os.mkdir(temp_dir)
-
-    for f in files:
-        shutil.copyfile(f, temp_dir / f.name)
-
-    shutil.make_archive(zipname, format="zip", root_dir=temp_dir)
-
-    shutil.rmtree(temp_dir)
-
-    return dest.joinpath(zipname + ".zip")
-
-
-def convert_to_utf8(filepath, target_dir):
-    import chardet
-    import codecs
-
-    filepath = Path(filepath)
-
     with open(filepath, "rb") as f:
         content_bytes = f.read()
         detected = chardet.detect(content_bytes)
@@ -187,19 +218,12 @@ def convert_to_utf8(filepath, target_dir):
         else:
             content_text = codecs.decode(content_bytes, file_encoding, errors="replace")
 
-    name, ext = filepath.name.split(".")
-    encoded_file_name = f"{name}-utf-8.{ext}"
-
-    with open(target_dir / encoded_file_name, "wb") as f:
-        f.write(codecs.encode(content_text, "utf-8", errors="replace"))
-        # print(f"{encoded_file_name} written to")
-
-    return target_dir / encoded_file_name
+    return codecs.encode(content_text, "utf-8", errors="replace")
 
 
-def all_files_under(path, extension=""):
+def all_files_under(dirpath: PathLike, extension="") -> List[Path]:
     """
-    Iterates through all files that are under the given path with the given extension ex '.log'
+    Iterates through all files that are under the given dir with the given extension ex '.log'
 
     Args:
         path: The directory to scan
@@ -210,7 +234,7 @@ def all_files_under(path, extension=""):
     results = []
 
     try:
-        currpath, _, filenames = next(os.walk(path))  # only traverse one level
+        currpath, _, filenames = next(os.walk(dirpath))  # only traverse one level
     except StopIteration:
         # means no files in log folder
         return results
@@ -222,24 +246,31 @@ def all_files_under(path, extension=""):
     return results
 
 
-def delete_old_files(dirpath, extension="", days=1):
+def delete_old_files(dirpath: PathLike, days: int, extension="") -> List[Path]:
     """
-    Deletes files older than a certain number of days.
+    Deletes files older than a certain number of days in a given folder and returns a list of
+    files that were deleted.
+    Non recursive.
 
     Args:
         dirpath: Path for directory
-        extension (str, optional): File extension
-        days (int, optional): Number of days for file age
+        days: Age of files in days
+        extension (str, optional): File extension including period prefix
+    
+    Returns:
+        List of files that were deleted
     """
-    numberOfDays = -1 * days
-    days_ago = datetime.datetime.now() + datetime.timedelta(numberOfDays)
-
-    dirpath = Path(dirpath)
+    num_days = -1 * days
+    days_ago = datetime.datetime.now() + datetime.timedelta(num_days)
 
     filepaths = all_files_under(dirpath, extension)
 
+    deleted = []
+
     for f in filepaths:
-        fpath = Path(f)
-        last_m_time = datetime.datetime.fromtimestamp(fpath.stat().st_mtime)
+        last_m_time = datetime.datetime.fromtimestamp(f.stat().st_mtime)
         if last_m_time < days_ago:
-            os.remove(fpath)
+            os.remove(f)
+            deleted.append(f)
+    
+    return deleted
